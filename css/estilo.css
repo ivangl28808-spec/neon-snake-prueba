@@ -1,0 +1,130 @@
+/* Neon Snake — pantallas, HUD y controles. El tablero (canvas) lo dibuja js/juego.js.
+   Paleta y medidas: guía de NEXUS (#263, #265, #273, #280). Nada en línea por la CSP. */
+:root {
+  color-scheme: dark;
+  --bg: #0E0B1F; --card: #1B1640; --card2: #241C52; --line: #2E2765;
+  --text: #F4F1FF; --dim: #A9A2D3;
+  --pink: #FF3D9A; --cyan: #35E3F0; --amber: #FFC83D; --red: #FF4D6D;
+  --fuente-titulo: "Arial Black", "Segoe UI Black", system-ui, sans-serif;
+  --fuente-texto: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --lado: 200px; /* lado del tablero; lo recalcula js/main.js (empieza pequeño para no forzar zoom en móvil) */
+  --hueco: 16px;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 16px/1.4 var(--fuente-texto);
+  overflow-x: hidden; overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+
+/* Disposición: HUD, tablero y cruceta en columna; en horizontal táctil, cruceta a la derecha */
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--lado);
+  grid-template-areas: "hud" "tablero" "cruceta";
+  justify-content: center; align-content: center;
+  row-gap: 12px; column-gap: 24px;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+           calc(var(--hueco) + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+.app.horizontal {
+  grid-template-columns: var(--lado) auto;
+  grid-template-areas: "hud ." "tablero cruceta";
+  align-items: center;
+}
+
+/* HUD: PUNTOS · RÉCORD · pausa (#271) */
+.hud { grid-area: hud; display: flex; align-items: center; gap: 16px; min-height: 48px; }
+.marcador { display: flex; flex-direction: column; }
+.etiqueta { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.valor { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.valor-record { color: var(--amber); }
+.valor.destello { color: var(--amber); }
+.btn-pausa {
+  margin-left: auto; width: 48px; height: 48px; flex: none;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  position: relative;
+}
+.btn-pausa::before, .btn-pausa::after {
+  content: ""; position: absolute; top: 15px; width: 5px; height: 18px; border-radius: 2px; background: var(--text);
+}
+.btn-pausa::before { left: 16px; }
+.btn-pausa::after { right: 16px; }
+.btn-pausa:disabled { opacity: .4; cursor: default; }
+
+/* Tablero y capas encima */
+.tablero { grid-area: tablero; position: relative; width: var(--lado); height: var(--lado); }
+.tablero canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.capa {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--hueco);
+  padding: 16px; text-align: center;
+  background: rgba(14, 11, 31, .85);
+}
+.titulo {
+  margin: 0; font-family: var(--fuente-titulo); font-weight: 900; text-transform: uppercase;
+  letter-spacing: .04em; font-size: clamp(28px, 8vw, 48px); line-height: 1.1;
+  text-shadow: 0 0 16px var(--pink);
+}
+.titulo.victoria { color: var(--amber); text-shadow: 0 0 16px var(--amber); }
+.rosa { color: var(--pink); }
+.ambar { color: var(--amber); font-variant-numeric: tabular-nums; }
+.record-linea, .ayuda { margin: 0; color: var(--dim); }
+.ayuda { font-size: 14px; max-width: 32ch; }
+.puntuacion-final { margin: 0; font-size: 48px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.nuevo-record { margin: 0; color: var(--amber); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+
+.btn { min-height: 48px; padding: 0 24px; border-radius: 12px; font-weight: 700; }
+.btn-principal { background: var(--pink); color: var(--bg); border: 0; }
+.btn-secundario { background: transparent; color: var(--cyan); border: 2px solid var(--cyan); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* Cuenta 3-2-1 (#273) */
+.capa-cuenta { background: rgba(14, 11, 31, .6); }
+.numero-cuenta {
+  font-family: var(--fuente-titulo); font-weight: 900; font-size: calc(var(--lado) * .4); line-height: 1;
+  text-shadow: 0 0 16px var(--pink);
+  animation: fundido 150ms ease-out;
+}
+@keyframes fundido { from { opacity: 0; } to { opacity: 1; } }
+
+/* Cruceta: solo con puntero táctil (#271, #280) */
+.cruceta {
+  grid-area: cruceta; justify-self: center;
+  display: none;
+  grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(2, 64px);
+  grid-template-areas: ". arriba ." "izquierda abajo derecha";
+  gap: 8px; touch-action: none;
+}
+@media (any-pointer: coarse) { .cruceta { display: grid; } }
+.dir {
+  position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  touch-action: none;
+}
+.dir:active, .dir.pulsado { border-color: var(--cyan); background: var(--card2); }
+.dir::before {
+  content: ""; position: absolute; inset: 0; margin: auto; width: 22px; height: 22px;
+  background: var(--text); clip-path: polygon(50% 15%, 95% 85%, 5% 85%);
+}
+.dir-arriba { grid-area: arriba; }
+.dir-izquierda { grid-area: izquierda; }
+.dir-abajo { grid-area: abajo; }
+.dir-derecha { grid-area: derecha; }
+.dir-abajo::before { transform: rotate(180deg); }
+.dir-izquierda::before { transform: rotate(-90deg); }
+.dir-derecha::before { transform: rotate(90deg); }
+
+.solo-lector {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .numero-cuenta { animation: none; }
+}

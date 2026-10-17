@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Neon Snake</title>
+<link rel="stylesheet" href="css/estilo.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="hud" id="hud">
+    <div class="marcador">
+      <span class="etiqueta">Puntos</span>
+      <span class="valor" id="puntos">0</span>
+    </div>
+    <div class="marcador">
+      <span class="etiqueta">Récord</span>
+      <span class="valor valor-record" id="recordHud">0</span>
+    </div>
+    <button type="button" class="btn-pausa" id="btnPausa" aria-label="Pausar" disabled></button>
+  </header>
+
+  <div class="tablero" id="tablero">
+    <canvas id="lienzo" aria-label="Tablero de juego" role="img"></canvas>
+
+    <section class="capa" id="pantallaInicio" aria-labelledby="tituloInicio">
+      <h1 class="titulo" id="tituloInicio">Neon <span class="rosa">Snake</span></h1>
+      <p class="record-linea">Récord: <span class="ambar" id="recordInicio">0</span></p>
+      <button type="button" class="btn btn-principal" id="btnJugar">Jugar</button>
+      <p class="ayuda" id="ayuda">Flechas/WASD para mover · Espacio o P para pausar</p>
+    </section>
+
+    <section class="capa" id="pantallaPausa" aria-labelledby="tituloPausa" hidden>
+      <h2 class="titulo" id="tituloPausa">Pausa</h2>
+      <button type="button" class="btn btn-principal" id="btnContinuar">Continuar</button>
+      <button type="button" class="btn btn-secundario" id="btnReiniciar">Reiniciar</button>
+      <button type="button" class="btn btn-secundario" id="btnSalir">Salir al inicio</button>
+    </section>
+
+    <section class="capa" id="pantallaFin" aria-labelledby="tituloFin" hidden>
+      <h2 class="titulo" id="tituloFin">Fin de partida</h2>
+      <p class="puntuacion-final" id="puntuacionFinal">0</p>
+      <p class="nuevo-record" id="nuevoRecord" hidden>¡Nuevo récord!</p>
+      <p class="record-linea">Récord: <span class="ambar" id="recordFin">0</span></p>
+      <button type="button" class="btn btn-principal" id="btnOtraVez">Jugar otra vez</button>
+      <button type="button" class="btn btn-secundario" id="btnInicio">Inicio</button>
+    </section>
+
+    <div class="capa capa-cuenta" id="cuenta" hidden aria-hidden="true">
+      <span class="numero-cuenta" id="numeroCuenta">3</span>
+    </div>
+  </div>
+
+  <nav class="cruceta" id="cruceta" aria-label="Controles de dirección">
+    <button type="button" class="dir dir-arriba" data-dir="arriba" aria-label="Arriba"></button>
+    <button type="button" class="dir dir-izquierda" data-dir="izquierda" aria-label="Izquierda"></button>
+    <button type="button" class="dir dir-abajo" data-dir="abajo" aria-label="Abajo"></button>
+    <button type="button" class="dir dir-derecha" data-dir="derecha" aria-label="Derecha"></button>
+  </nav>
+
+  <p class="solo-lector" id="anuncio" aria-live="polite"></p>
+</main>
+</body>
+</html>
