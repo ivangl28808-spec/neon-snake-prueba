@@ -191,8 +191,11 @@ export function crearJuego(canvas, { alComer, alMorir, alGanar, tamano = 20, rng
     ppp = globalThis.devicePixelRatio || 1;
     const ancho = Math.round(anchoCss * ppp);
     const alto = Math.round(altoCss * ppp);
-    if (canvas.width !== ancho) canvas.width = ancho;
-    if (canvas.height !== alto) canvas.height = alto;
+    if (canvas.width !== ancho || canvas.height !== alto) {
+      canvas.width = ancho;
+      canvas.height = alto;
+      ultimoDibujo = -Infinity; // cambiar el tamaño borra el lienzo: el siguiente fotograma redibuja sin esperar al reposo (F-1)
+    }
     if (!pedirFotograma) dibujar(0);
   }
 
