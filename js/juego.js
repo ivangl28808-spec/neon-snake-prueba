@@ -16,6 +16,7 @@ const TIC_MS = 125;          // 8 celdas por segundo, constante (RF-4)
 const MAX_GIROS = 2;         // cola de giros por tic (CA-5)
 const MAX_DELTA_MS = 250;    // tope por fotograma: al volver de una pausa no se recupera el tiempo de golpe
 const MARGEN = 12;           // px CSS reservados alrededor del tablero para el brillo del borde
+const MS_REPOSO = 66;        // fuera de partida se redibuja a ~15 fps: basta para el latido y ahorra batería
 
 // Paleta de la guía de NEXUS (#263, #265)
 const COLOR = {
@@ -56,6 +57,7 @@ export function crearJuego(canvas, { alComer, alMorir, alGanar, tamano = 20, rng
   let ultimoT = null;
   let instanteMuerte = null;
   let idFotograma = null;
+  let ultimoDibujo = -Infinity;
   let anchoCss = 0;
   let altoCss = 0;
   let ppp = 1;
@@ -171,7 +173,13 @@ export function crearJuego(canvas, { alComer, alMorir, alGanar, tamano = 20, rng
     } else {
       ultimoT = null;
     }
-    dibujar(t);
+    // Si cambia la densidad sin cambiar el tamaño (otro monitor), el ResizeObserver no avisa
+    if ((globalThis.devicePixelRatio || 1) !== ppp) ajustarTamano();
+    const parpadeando = instanteMuerte !== null && (globalThis.performance?.now() ?? Date.now()) - instanteMuerte < 450;
+    if (corriendo || parpadeando || t - ultimoDibujo >= MS_REPOSO) {
+      dibujar(t);
+      ultimoDibujo = t;
+    }
     idFotograma = pedirFotograma(fotograma);
   }
 
