@@ -20,6 +20,7 @@ const pantallas = { inicio: $("pantallaInicio"), pausa: $("pantallaPausa"), fin:
 let estado = "inicio";              // inicio | cuenta | juego | pausa | fin
 let juego = null;
 let arrancado = false;              // si ya se llamó a iniciar() en esta partida
+let dirPendiente = null;            // última dirección pulsada durante la cuenta (CA-33)
 let temporizadorCuenta = null;
 let temporizadorDestello = null;
 let finDesde = 0;
@@ -89,6 +90,7 @@ function jugar() {
 function empezarCuenta() {
   pararCuenta();
   estado = "cuenta";
+  dirPendiente = null;
   mostrar(null);
   $("btnPausa").disabled = false;
   let n = 3;
@@ -104,6 +106,7 @@ function empezarCuenta() {
     if (n > 0) { pintarNumero(); return; }
     pararCuenta();
     estado = "juego";
+    if (dirPendiente) juego.girar(dirPendiente);   // se aplica justo antes del primer tic
     if (arrancado) juego.reanudar(); else { juego.iniciar(); arrancado = true; }
   }, PASO_CUENTA);
 }
@@ -162,15 +165,23 @@ function terminar(puntos, victoria) {
 }
 const finBloqueado = () => estado === "fin" && performance.now() - finDesde < BLOQUEO_FIN;
 
+// En juego gira; durante la cuenta solo se recuerda la última (CA-33)
+function dirigir(dir) {
+  if (estado === "juego") juego.girar(dir);
+  else if (estado === "cuenta") dirPendiente = dir;
+}
+
 // ---------- Teclado (RF-10, RF-10 bis, CA-20) ----------
 addEventListener("keydown", e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const tecla = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   const sobreBoton = e.target instanceof HTMLButtonElement;
+  // A-1: la autorrepetición de una tecla mantenida no alterna pausa y cuenta; las flechas sí repiten
+  if (e.repeat && !DIRECCIONES[tecla]) { e.preventDefault(); return; }
 
   if (estado === "juego" || estado === "cuenta") {
     const dir = DIRECCIONES[tecla];
-    if (dir) { e.preventDefault(); if (estado === "juego") juego.girar(dir); return; }
+    if (dir) { e.preventDefault(); dirigir(dir); return; }
     if (tecla === " " || tecla === "p" || tecla === "Escape") { e.preventDefault(); pausar(); }
     return;
   }
@@ -186,15 +197,15 @@ addEventListener("keydown", e => {
 // ---------- Deslizamiento sobre el tablero (RF-11, CA-6, CA-7) ----------
 let origen = null;
 lienzo.addEventListener("pointerdown", e => {
-  if (estado !== "juego") return;
+  if (estado !== "juego" && estado !== "cuenta") return;
   origen = { x: e.clientX, y: e.clientY, id: e.pointerId };
   try { lienzo.setPointerCapture(e.pointerId); } catch { /* el puntero ya no está activo: se sigue sin captura */ }
 });
 lienzo.addEventListener("pointermove", e => {
-  if (!origen || e.pointerId !== origen.id || estado !== "juego") return;
+  if (!origen || e.pointerId !== origen.id) return;
   const dx = e.clientX - origen.x, dy = e.clientY - origen.y;
   if (Math.max(Math.abs(dx), Math.abs(dy)) < UMBRAL_DESLIZAR) return;
-  juego.girar(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "derecha" : "izquierda") : (dy > 0 ? "abajo" : "arriba"));
+  dirigir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "derecha" : "izquierda") : (dy > 0 ? "abajo" : "arriba"));
   origen = { x: e.clientX, y: e.clientY, id: e.pointerId };   // permite encadenar giros sin levantar el dedo
 });
 for (const ev of ["pointerup", "pointercancel"]) lienzo.addEventListener(ev, () => { origen = null; });
@@ -203,11 +214,11 @@ for (const ev of ["pointerup", "pointercancel"]) lienzo.addEventListener(ev, () 
 for (const boton of document.querySelectorAll(".dir")) {
   boton.addEventListener("pointerdown", e => {
     e.preventDefault();
-    if (estado === "juego") juego.girar(boton.dataset.dir);
+    dirigir(boton.dataset.dir);
   });
   // teclado y lectores de pantalla activan el botón con click (pointerdown no salta)
   boton.addEventListener("click", e => {
-    if (e.detail === 0 && estado === "juego") juego.girar(boton.dataset.dir);
+    if (e.detail === 0) dirigir(boton.dataset.dir);
   });
 }
 
